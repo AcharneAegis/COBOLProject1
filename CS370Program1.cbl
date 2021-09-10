@@ -37,7 +37,7 @@
       *        1.  Salary Total
       *    *************
       * CALCULATIONS
-      *    TO BE FILLED IN LATER
+      *    ADD EACH EMPLOYEE'S CURRENT SALARY TO A RUNNING TOTAL SALAY
       *
       ******************************************************************
        ENVIRONMENT DIVISION.
@@ -48,7 +48,7 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT EMPLOYEE-FILE
-               ASSIGN TO 'Knox.txt'
+               ASSIGN TO 'PR1FA21-Knox.txt'
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT EMP-REPORT-FILE
                ASSIGN TO PRINTER 'Knox-Salary-Report'.
@@ -65,11 +65,12 @@
            05  EMP-POSITION            PIC A(2).
            05  EMP-LAST-NAME           PIC X(10).
            05  EMP-FIRST-NAME          PIC X(10).
+           05  FILLER                  PIC X(11).
            05  EMP-STATUS              PIC X(1).
            05  FILLER                  PIC 9(8).
            05  FILLER                  PIC 9(8).
            05  EMP-LAST-RAISE-DATE     PIC 9(8).
-           05  EMP-CURRENT-SALARY      PIC 9(8).
+           05  EMP-CURRENT-SALARY      PIC 999999V99.
 
        FD EMP-REPORT-FILE
            RECORD CONTAINS 80 CHARACTERS.
@@ -88,8 +89,6 @@
        01  REPORT-FIELDS.
            05  PROPER-SPACING          PIC S9          VALUE +2.
 
-       01  CONSTANTS-FIELDS.
-           05  CF-CURRENT-DATE         PIC 9999/99/99.
 
       *********************    OUTPUT AREA     *************************
 
@@ -97,16 +96,16 @@
            05  H1-DATE                 PIC 9999/99/99. 
            05                          PIC X(25)       VALUE SPACES.
            05                          PIC A(13)       VALUE 
-                                                       'BENNET SHOES'.
-           05                          PIC A(19)       VALUE SPACES.
+                                                       'BENNETT SHOES'.
+           05                          PIC A(20)       VALUE SPACES.
            05                          PIC XXX         VALUE 'PWA'.
            
        01  HEADING-TWO.
-           05                          PIC X(35)       VALUE SPACES.
+           05                          PIC X(34)       VALUE SPACES.
            05                          PIC X(15)       VALUE 
                                                    'EMPLOYEE REPORT'.
        01  HEADING-THREE.
-           05                          PIC X(36)       VALUE SPACES.
+           05                          PIC X(35)       VALUE SPACES.
            05                          PIC X(13)       VALUE 
                                                        'KNOXVILLE, TN'.
        01  HEADING-FOUR.
@@ -114,12 +113,15 @@
            05                          PIC X(3)        VALUE 'EMP'.
            05                          PIC X(4)        VALUE SPACES.
            05                          PIC X(3)        VALUE 'EMP'.
+           05                          PIC X(6)        VALUE SPACES.
+           05                          PIC X(3)        VALUE 'EMP'.
            05                          PIC X(9)        VALUE SPACES.
            05                          PIC X(3)        VALUE 'EMP'.
            05                          PIC X(8)        VALUE SPACES.
            05                          PIC X(3)        VALUE 'EMP'.
            05                          PIC X(6)        VALUE SPACES.
            05                          PIC X(4)        VALUE 'LAST'.
+           05                          PIC X(7)        VALUE SPACES.
            05                          PIC X(8)        VALUE 'CURRENT'.
 
        01  HEADING-FIVE.
@@ -137,6 +139,8 @@
            05                          PIC X(6)        VALUE 'STATUS'.
            05                          PIC X(3)        VALUE SPACES.
            05                          PIC X(8)        VALUE 'INCREASE'.
+           05                          PIC X(6)        VALUE SPACES.
+           05                          PIC X(6)        VALUE 'SALARY'.
 
 
        01  DETAIL-LINE.
@@ -153,17 +157,15 @@
            05                          PIC X(5)        VALUE SPACES.
            05  DL-EMP-LAST-RAISE-DATE  PIC 99/99/9999.
            05                          PIC X(3)        VALUE SPACES.
-           05  DL-DOLLAR-SIGN          PIC X           VALUE '$'.
-           05  DL-EMP-CURRENT-SALARY   PIC S999999V99.
+           05  DL-EMP-CURRENT-SALARY   PIC $999,999.99.
 
 
        01  TOTAL-LINE.
            05  FILLER                  PIC X(45)         VALUE SPACES.
            05                          PIC X(13)       VALUE 
                                                        'SALARY TOTAL:'.
-           05                          PIC X(2)        VALUE SPACES.
-           05  TL-DOLLAR-SIGN          PIC X           VALUE '$'.
-           05  TL-SALARY-TOTAL         PIC S9999999V99.
+           05                          PIC X(1)        VALUE SPACES.
+           05  TL-SALARY-TOTAL         PIC $9,999,999.99.
 
        PROCEDURE DIVISION.
        
@@ -178,24 +180,28 @@
            OPEN INPUT EMPLOYEE-FILE
                OUTPUT EMP-REPORT-FILE
            ACCEPT H1-DATE FROM DATE YYYYMMDD
-           ACCEPT CF-CURRENT-DATE FROM DATE YYYYMMDD
            PERFORM 20-HEADER-ROUTINE
            .
 
        20-HEADER-ROUTINE.
-           MOVE 1 TO PROPER-SPACING
            WRITE REPORT-RECORD FROM HEADING-ONE
-               AFTER ADVANCING PAGE
+               AFTER ADVANCING PROPER-SPACING
+
            MOVE 2 TO PROPER-SPACING
+
            WRITE REPORT-RECORD FROM HEADING-TWO
                AFTER ADVANCING PROPER-SPACING
+
            WRITE REPORT-RECORD FROM HEADING-THREE
                AFTER ADVANCING PROPER-SPACING
+
            WRITE REPORT-RECORD FROM HEADING-FOUR
                AFTER ADVANCING PROPER-SPACING
+
            MOVE 1 TO PROPER-SPACING
            WRITE REPORT-RECORD FROM HEADING-FIVE
                AFTER ADVANCING PROPER-SPACING
+               
            MOVE 2 TO PROPER-SPACING
            .
        
@@ -205,17 +211,12 @@
                    AT END
                        MOVE 'N' TO EOF-FLAG
                    NOT AT END 
-                       IF 
-                          
-                       ELSE
-                          
-                       END-IF
-                       PERFORM 30-VERIFY-EMPLOYEE-RAISE-DATE
+                       PERFORM 30-PASS-EMPLOYEE-DATA
                END-READ
            END-PERFORM
            .
        
-       PERFORM 30-VERIFY-EMPLOYEE-RAISE-DATE.
+       30-PASS-EMPLOYEE-DATA.
            
            MOVE EMP-ID TO DL-EMP-ID
            MOVE EMP-POSITION TO DL-EMP-POS
@@ -232,3 +233,25 @@
            ADD EMP-CURRENT-SALARY TO TF-SALARY-TOTAL
 
            .
+       35-WRITE-A-LINE.
+           WRITE REPORT-RECORD
+               AFTER ADVANCING PROPER-SPACING
+           .
+
+       40-EOF-ROUTINE.
+           PERFORM 45-TOTAL-SALARY-ROUTINE
+           CLOSE EMPLOYEE-FILE
+               EMP-REPORT-FILE
+           STOP RUN
+           .
+
+       45-TOTAL-SALARY-ROUTINE.
+           MOVE TF-SALARY-TOTAL TO TL-SALARY-TOTAL
+           MOVE 2 TO PROPER-SPACING
+
+           WRITE REPORT-RECORD FROM TOTAL-LINE
+               AFTER ADVANCING PROPER-SPACING
+
+           .
+
+
